@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id');
@@ -15,12 +15,13 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const { date, description, amount, category, type } = await request.json();
 
     // Verify transaction belongs to user
     const existingTransaction = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id,
         userId,
       },
     });
@@ -33,7 +34,7 @@ export async function PUT(
     }
 
     const transaction = await prisma.transaction.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(date && { date: new Date(date) }),
         ...(description && { description }),
@@ -58,7 +59,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id');
@@ -70,10 +71,12 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
+
     // Verify transaction belongs to user
     const existingTransaction = await prisma.transaction.findFirst({
       where: {
-        id: params.id,
+        id,
         userId,
       },
     });
@@ -86,7 +89,7 @@ export async function DELETE(
     }
 
     await prisma.transaction.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json(
